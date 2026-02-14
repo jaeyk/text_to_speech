@@ -12,12 +12,13 @@
       .note { color:#666; font-size:0.9rem; }
       .btn { padding:8px 12px; font-size:1rem; }
       select, input[type="checkbox"] { margin-left:6px }
+      input[type="url"] { padding:6px; min-width:280px; }
       progress { width:200px; }
     </style>
   </head>
   <body>
     <h1>PracticeTalk</h1>
-    <p>This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.</p>
+    <p>This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative. Co-developed by Jae Yeon Kim and Codex.</p>
 
     <form id="form">
       <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
@@ -26,6 +27,10 @@
       </label>
 
       <div class="controls">
+        <label>Backend URL:
+          <input id="backend_url" type="url" placeholder="https://your-api-host" />
+        </label>
+
         <label>Voice:
           <select id="voice">
             <option value="en-US-AvaMultilingualNeural">Ava (en-US)</option>
@@ -81,6 +86,7 @@
       const paceSelect = document.getElementById('pace');
       const streamCheckbox = document.getElementById('stream');
       const progressEl = document.getElementById('progress');
+      const backendInput = document.getElementById('backend_url');
 
       // ETA / talk progress (values set after estimate)
       let estimatedSeconds = 0;
@@ -97,6 +103,22 @@
         }
       });
 
+      const isGithubPages = window.location.hostname.endsWith('github.io');
+      const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
+      if (savedBackend) {
+        backendInput.value = savedBackend;
+      } else if (!isGithubPages) {
+        backendInput.value = window.location.origin;
+      }
+      backendInput.addEventListener('change', () => {
+        localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());
+      });
+
+      function apiUrl(path) {
+        const base = backendInput.value.trim().replace(/\/+$/, '');
+        if (!base) return path;
+        return `${base}${path}`;
+      }
 
       function setBusy(on) {
         btn.disabled = on;
@@ -104,13 +126,62 @@
       }
 
       async function synthesizeNormal(fd) {
-        const resp = await fetch('/synthesize', { method: 'POST', body: fd });
+        const resp = await fetch(apiUrl('/synthesize'), { method: 'POST', body: fd });
         if (!resp.ok) {
-          const err = await resp.json().catch(()=>null);
-          throw new Error(err?.detail || resp.statusText);
+          const raw = await resp.text().catch(() => '');
+          let detail = '';
+          try {
+            detail = JSON.parse(raw)?.detail || '';
+          } catch (_) {
+            detail = '';
+          }
+          throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
         }
         const blob = await resp.blob();
         return blob;
+      }
+
+      async function synthesizeStream(fd) {
+        const resp = await fetch(apiUrl('/synthesize_stream'), { method: 'POST', body: fd });
+        if (!resp.ok || !resp.body) {
+          const raw = await resp.text().catch(() => '');
+          let detail = '';
+          try {
+            detail = JSON.parse(raw)?.detail || '';
+          } catch (_) {
+            detail = '';
+          }
+          throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
+        }
+
+        const mediaSource = new MediaSource();
+        const url = URL.createObjectURL(mediaSource);
+        player.src = url;
+
+        await new Promise((resolve, reject) => {
+          mediaSource.addEventListener('sourceopen', async () => {
+            try {
+              const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+              const reader = resp.body.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value) await appendBufferAsync(sourceBuffer, value);
+              }
+              const finalize = () => {
+                if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                  mediaSource.endOfStream();
+                  resolve();
+                } else {
+                  setTimeout(finalize, 50);
+                }
+              };
+              finalize();
+            } catch (err) {
+              reject(err);
+            }
+          }, { once: true });
+        });
       }
 
       function appendBufferAsync(sourceBuffer, chunk) {
@@ -185,7 +256,7 @@
         }
 
         try {
-          const estResp = await fetch('/estimate', { method: 'POST', body: fdEstimate });
+          const estResp = await fetch(apiUrl('/estimate'), { method: 'POST', body: fdEstimate });
           if (estResp.ok) {
             const est = await estResp.json();
             estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
@@ -207,6 +278,12 @@
         fd.append('voice', voiceSelect.value);
         fd.append('fmt', formatSelect.value);
         fd.append('pace', paceSelect.value);
+
+        if (isGithubPages && !backendInput.value.trim()) {
+          status.textContent = 'Set Backend URL first (GitHub Pages hosts only the frontend).';
+          setBusy(false);
+          return;
+        }
 
         if (fileInput.files.length) {
           fd.append('file', fileInput.files[0]);

@@ -1,6 +1,6 @@
 # PracticeTalk
 
-This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.
+This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative. Co-developed by Jae Yeon Kim and Codex.
 
 Features
 - Upload a `.txt` file or paste text and synthesize speech.
@@ -23,6 +23,7 @@ Docker
 
 GitHub Actions hosting
 - The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/PracticeTalk/`.
+- On GitHub Pages, set **Backend URL** in the UI to your running FastAPI server (for example `https://<your-backend-host>`). The `/estimate` and `/synthesize` endpoints are served by the backend, not by GitHub Pages.
 
 Notes
 - Streaming uses MP3 chunk streaming (MediaSource in the web UI).
