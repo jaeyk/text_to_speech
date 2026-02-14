@@ -22,7 +22,7 @@ Docker
 - Run: docker run -p 8000:8000 talk-practice
 
 GitHub Actions hosting
-- The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/text_to_speech/`.
+- The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/PracticeTalk/`.
 
 Notes
 - Streaming uses MP3 chunk streaming (MediaSource in the web UI).
