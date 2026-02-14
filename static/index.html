@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Talk Practice — edge-tts</title>
+    <style>
+      body { font-family: system-ui, Arial, sans-serif; max-width:900px; margin:2rem auto; padding:1rem; }
+      textarea { width:100%; height:160px; font-size:1rem; padding:8px; }
+      .controls { margin-top:1rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+      audio { width:100%; margin-top:1rem; }
+      .note { color:#666; font-size:0.9rem; }
+      .btn { padding:8px 12px; font-size:1rem; }
+      select, input[type="checkbox"] { margin-left:6px }
+      progress { width:200px; }
+    </style>
+  </head>
+  <body>
+    <h1>Talk Practice</h1>
+    <p>Upload a <code>.txt</code> file or paste text — synthesize audio using Microsoft neural voices.</p>
+
+    <form id="form">
+      <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
+      <label>Or paste text:
+        <textarea id="text" placeholder="Type or paste text here..."></textarea>
+      </label>
+
+      <div class="controls">
+        <label>Voice:
+          <select id="voice">
+            <option value="en-US-AvaMultilingualNeural">Ava (en-US)</option>
+            <option value="en-US-JennyNeural">Jenny (en-US)</option>
+            <option value="en-GB-LibbyNeural">Libby (en-GB)</option>
+            <option value="en-AU-NatashaNeural">Natasha (en-AU)</option>
+          </select>
+        </label>
+
+        <label>Format:
+          <select id="format">
+            <option value="mp3">MP3</option>
+            <option value="wav">WAV</option>
+          </select>
+        </label>
+
+        <label>Backend URL:
+          <input id="api_base" type="url" placeholder="(same origin) or https://api.example.com" style="width:260px" />
+        </label>
+
+        <label>Pace:
+          <select id="pace">
+            <option value="slow">Slow</option>
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Fast</option>
+            <option value="faster">Faster</option>
+          </select>
+        </label>
+
+        <label>Pause (ms):
+          <input id="pause_ms" type="number" min="0" max="2000" step="50" value="300" style="width:90px" />
+        </label>
+
+        <label title="Stream MP3 chunks as they are generated (MP3 only)">
+          <input type="checkbox" id="stream" /> Stream as produced
+        </label>
+
+        <button id="speak" type="button" class="btn">Synthesize →</button>
+        <a id="download" style="display:none" download>Download</a>
+        <progress id="progress" value="0" max="100" style="display:none"></progress>
+        <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped and replaced with a 3s pause.</div>
+      </div>
+    </form>
+
+    <audio id="player" controls></audio>
+
+    <script>
+      const btn = document.getElementById('speak');
+      const fileInput = document.getElementById('file');
+      const textInput = document.getElementById('text');
+      const status = document.getElementById('status');
+      const player = document.getElementById('player');
+      const download = document.getElementById('download');
+      const voiceSelect = document.getElementById('voice');
+      const formatSelect = document.getElementById('format');
+      const paceSelect = document.getElementById('pace');
+      const pauseInput = document.getElementById('pause_ms');
+      const streamCheckbox = document.getElementById('stream');
+      const progressEl = document.getElementById('progress');
+
+      // Disable streaming when WAV is selected
+      formatSelect.addEventListener('change', () => {
+        if (formatSelect.value === 'wav') {
+          streamCheckbox.checked = false;
+          streamCheckbox.disabled = true;
+        } else {
+          streamCheckbox.disabled = false;
+        }
+      });
+
+      function getApiUrl(path) {
+        const base = (document.getElementById('api_base')?.value || '').trim().replace(/\/$/, '');
+        if (!base) return path.startsWith('/') ? path : '/' + path;
+        return base + (path.startsWith('/') ? path : '/' + path);
+      }
+
+      function setBusy(on) {
+        btn.disabled = on;
+        if (!on) btn.textContent = 'Synthesize →';
+      }
+
+      async function synthesizeNormal(fd) {
+        const resp = await fetch(getApiUrl('/synthesize'), { method: 'POST', body: fd });
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>null);
+          throw new Error(err?.detail || resp.statusText);
+        }
+        const blob = await resp.blob();
+        return blob;
+      }
+
+      function appendBufferAsync(sourceBuffer, chunk) {
+        return new Promise((resolve, reject) => {
+          const tryAppend = () => {
+            if (!sourceBuffer.updating) {
+              try {
+                sourceBuffer.appendBuffer(chunk);
+                resolve();
+              } catch (err) {
+                reject(err);
+              }
+            } else {
+              setTimeout(tryAppend, 50);
+            }
+          };
+          tryAppend();
+        });
+      }
+
+      async function synthesizeStream(fd) {
+        const resp = await fetch(getApiUrl('/synthesize_stream'), { method: 'POST', body: fd });
+        if (!resp.ok) {
+          const err = await resp.json().catch(()=>null);
+          throw new Error(err?.detail || resp.statusText);
+        }
+
+        // Use MediaSource to play progressive MP3
+        const mediaSource = new MediaSource();
+        player.src = URL.createObjectURL(mediaSource);
+
+        return new Promise((resolve, reject) => {
+          mediaSource.addEventListener('sourceopen', async () => {
+            let mime = 'audio/mpeg';
+            let sourceBuffer;
+            try {
+              sourceBuffer = mediaSource.addSourceBuffer(mime);
+            } catch (e) {
+              reject(new Error('MediaSource does not support audio/mpeg in this browser'));
+              return;
+            }
+
+            const reader = resp.body.getReader();
+            let received = 0;
+
+            async function read() {
+              try {
+                const { done, value } = await reader.read();
+                if (done) {
+                  // wait for any pending updates, then close
+                  const onUpdateEnd = () => {
+                    try { mediaSource.endOfStream(); } catch (e) {}
+                    resolve();
+                  };
+                  if (!sourceBuffer.updating) onUpdateEnd(); else sourceBuffer.addEventListener('updateend', onUpdateEnd, { once: true });
+                  return;
+                }
+                received += value.length;
+                progressEl.style.display = 'inline-block';
+                progressEl.value = Math.min(99, (received / 10000) * 100);
+
+                const chunk = value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength);
+                await appendBufferAsync(sourceBuffer, chunk);
+                read();
+              } catch (err) {
+                reject(err);
+              }
+            }
+
+            read();
+          });
+        });
+      }
+
+      async function runSynthesis() {
+        status.textContent = '';
+        setBusy(true);
+        progressEl.style.display = 'none';
+        progressEl.value = 0;
+        download.style.display = 'none';
+
+        const fd = new FormData();
+        fd.append('voice', voiceSelect.value);
+        fd.append('fmt', formatSelect.value);
+        fd.append('pace', paceSelect.value);
+        fd.append('pause_ms', pauseInput.value);
+
+        if (fileInput.files.length) {
+          fd.append('file', fileInput.files[0]);
+        } else {
+          fd.append('text', textInput.value);
+        }
+
+        try {
+          if (streamCheckbox.checked) {
+            status.textContent = 'Streaming...';
+            await synthesizeStream(fd);
+            player.play().catch(()=>{});
+            download.href = player.src;
+            download.download = 'speech.mp3';
+            download.style.display = 'inline-block';
+            status.textContent = '';
+            progressEl.style.display = 'none';
+          } else {
+            status.textContent = 'Processing...';
+            const blob = await synthesizeNormal(fd);
+            const url = URL.createObjectURL(blob);
+            player.src = url;
+            player.play().catch(()=>{});
+            download.href = url;
+            download.download = formatSelect.value === 'wav' ? 'speech.wav' : 'speech.mp3';
+            download.style.display = 'inline-block';
+            status.textContent = '';
+          }
+        } catch (err) {
+          status.textContent = 'Error: ' + (err.message || err);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      btn.addEventListener('click', () => {
+        if (!fileInput.files.length && !textInput.value.trim()) {
+          status.textContent = 'Please upload a text file or paste text.';
+          return;
+        }
+        runSynthesis();
+      });
+    </script>
+  </body>
+</html>
