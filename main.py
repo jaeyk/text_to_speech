@@ -152,39 +152,9 @@ def preprocess_slides(text: str) -> str:
     return SLIDE_RE.sub("__SLIDE_PAUSE__", text)
 
 
-def escape_for_ssml(s: str) -> str:
-    """Escape XML-special chars but preserve <break .../> tags."""
-    breaks: List[str] = []
-
-    def _store(m: re.Match) -> str:
-        breaks.append(m.group(0))
-        return f"__BREAK_{len(breaks)-1}__"
-
-    # temporarily remove break tags
-    s2 = re.sub(r"<break[^>]*?>", _store, s)
-    # escape the rest
-    s2 = s2.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    # restore breaks
-    for i, b in enumerate(breaks):
-        s2 = s2.replace(f"__BREAK_{i}__", b)
-    return s2
-
-
-def insert_sentence_breaks(s: str, pause_ms: int) -> str:
-    return SENTENCE_END_RE.sub(f"<break time=\"{pause_ms}ms\"/> ", s)
-
-
-def prepare_ssml_for_chunk(chunk: str, pause_ms: int, prosody_rate: str) -> str:
-    """Insert sentence breaks, replace slide-token with a 3s break, escape and wrap in SSML."""
-    # add short breaks after sentence punctuation
-    c = insert_sentence_breaks(chunk, pause_ms)
-    # replace slide tokens with a fixed 3s pause
-    c = c.replace("__SLIDE_PAUSE__", "<break time=\"3000ms\"/>")
-    # escape while preserving break tags
-    escaped = escape_for_ssml(c)
-    # wrap in SSML; voice is still passed as Communicate(..., voice=...)
-    ssml = f"<speak><prosody rate=\"{prosody_rate}\">{escaped}</prosody></speak>"
-    return ssml
+def prepare_text_for_chunk(chunk: str) -> str:
+    """Prepare plain text chunk for edge-tts (avoid raw SSML tags being spoken)."""
+    return chunk.replace("__SLIDE_PAUSE__", " ")
 
 
 def resolve_pace(pace: str):
@@ -201,8 +171,7 @@ async def synthesize(
     """Synthesize text (file upload or pasted text).
 
     - `pace` controls speaking rate (slow | normal | fast | faster).
-    - Uses a fixed base sentence pause (300ms) scaled by `pace`.
-    - `Slide N` sequences are skipped and replaced with a 3s pause.
+    - `Slide N` sequences are skipped during synthesis.
     """
     if file is None and (text is None or not text.strip()):
         raise HTTPException(status_code=400, detail="No text provided")
@@ -224,9 +193,7 @@ async def synthesize(
         raise HTTPException(status_code=400, detail="Unsupported format")
 
     # validate inputs
-    prosody_rate, pause_multiplier = resolve_pace(pace or "normal")
-    base_pause = DEFAULT_PAUSE_MS
-    effective_pause = max(0, int(base_pause * pause_multiplier))
+    prosody_rate, _ = resolve_pace(pace or "normal")
 
     # preprocess slides (replace Slide markers with a token)
     text_to_speak = preprocess_slides(text_to_speak)
@@ -249,8 +216,8 @@ async def synthesize(
                     tmpfd, tmp_path = tempfile.mkstemp(suffix=".mp3")
                     os.close(tmpfd)
                     try:
-                        ssml = prepare_ssml_for_chunk(chunk, effective_pause, prosody_rate)
-                        communicator = edge_tts.Communicate(ssml, voice=voice)
+                        text_chunk = prepare_text_for_chunk(chunk)
+                        communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
                         await communicator.save(tmp_path)
                         with open(tmp_path, "rb") as r:
                             out_f.write(r.read())
@@ -277,8 +244,8 @@ async def synthesize(
             tmpfd, tmp_path = tempfile.mkstemp(suffix=".wav")
             os.close(tmpfd)
             try:
-                ssml = prepare_ssml_for_chunk(chunk, effective_pause, prosody_rate)
-                communicator = edge_tts.Communicate(ssml, voice=voice)
+                text_chunk = prepare_text_for_chunk(chunk)
+                communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
                 await communicator.save(tmp_path)
                 with wave.open(tmp_path, "rb") as src:
                     if i == 0:
@@ -311,7 +278,6 @@ async def synthesize_stream(
 
     This endpoint streams `audio/mpeg` and is intended for clients that can
     progressively consume MP3 (the web UI uses MediaSource when streaming).
-    Uses a fixed base sentence pause (300ms) scaled by `pace`.
     """
     if file is None and (text is None or not text.strip()):
         raise HTTPException(status_code=400, detail="No text provided")
@@ -330,9 +296,7 @@ async def synthesize_stream(
         raise HTTPException(status_code=400, detail="Text is empty")
 
     # apply slide preprocessing and pace
-    prosody_rate, pause_multiplier = resolve_pace(pace or "normal")
-    base_pause = DEFAULT_PAUSE_MS
-    effective_pause = max(0, int(base_pause * pause_multiplier))
+    prosody_rate, _ = resolve_pace(pace or "normal")
     text_to_speak = preprocess_slides(text_to_speak)
 
     MAX_CHARS = 200_000
@@ -346,8 +310,8 @@ async def synthesize_stream(
             tmpfd, tmp_path = tempfile.mkstemp(suffix=".mp3")
             os.close(tmpfd)
             try:
-                ssml = prepare_ssml_for_chunk(chunk, effective_pause, prosody_rate)
-                communicator = edge_tts.Communicate(ssml, voice=voice)
+                text_chunk = prepare_text_for_chunk(chunk)
+                communicator = edge_tts.Communicate(text_chunk, voice=voice, rate=prosody_rate)
                 await communicator.save(tmp_path)
                 with open(tmp_path, "rb") as r:
                     while True:

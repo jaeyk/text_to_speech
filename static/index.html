@@ -14,12 +14,14 @@
       select, input[type="checkbox"] { margin-left:6px }
       input[type="url"] { padding:6px; min-width:280px; }
       progress { width:200px; }
+      .warn { background:#fff4d6; border:1px solid #e6c775; padding:10px; border-radius:8px; margin:12px 0; }
     </style>
   </head>
   <body>
     <h1>PracticeTalk</h1>
-    <p>This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.</p>
-    <p class="note"><strong>Developed by:</strong> Jae Yeon Kim and Codex.</p>
+    <p>This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an audio file, allowing you to check its flow and narrative.</p>
+    <p class="note"><strong>Developed by:</strong> Jae Yeon Kim and Codex (2026).</p>
+    <div id="mode_notice" class="warn" style="display:none"></div>
 
     <form id="form">
       <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
@@ -64,7 +66,7 @@
         <button id="speak" type="button" class="btn">Synthesize →</button>
         <a id="download" style="display:none" download>Download</a>
         <progress id="progress" value="0" max="100" style="display:none"></progress>
-        <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped and replaced with a 3s pause.</div>
+        <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped during synthesis. Processing can be slow, so please be patient after clicking Synthesize.</div>
 
         <div style="width:100%; margin-top:8px;">
           <div id="eta_text" class="note"></div>
@@ -130,11 +132,16 @@ uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
       });
 
       const isGithubPages = window.location.hostname.endsWith('github.io');
+      const modeNotice = document.getElementById('mode_notice');
       const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
       if (savedBackend) {
         backendInput.value = savedBackend;
       } else if (!isGithubPages) {
         backendInput.value = window.location.origin;
+      }
+      if (isGithubPages) {
+        modeNotice.style.display = 'block';
+        modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. For easiest use, run locally and open <code>http://127.0.0.1:8000</code>. If you stay here, set a Backend URL first.';
       }
       backendInput.addEventListener('change', () => {
         localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());

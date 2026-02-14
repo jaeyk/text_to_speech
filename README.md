@@ -1,8 +1,13 @@
 # PracticeTalk
 
-This is a simple, lightweight, browser-based tool that turns your talk script into an audio file, allowing you to check its flow and narrative.
+This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an audio file, allowing you to check its flow and narrative.
 
-Developed by Jae Yeon Kim and Codex.
+Jae Yeon Kim and Codex (2026).
+
+Use modes
+
+- Recommended: run locally and use one URL only: `http://127.0.0.1:8000`
+- Advanced: use GitHub Pages UI (`https://jaeyk.github.io/PracticeTalk/`) with a separate backend URL
 
 Features
 
@@ -10,7 +15,7 @@ Features
 - Supports `en-US-AvaMultilingualNeural` (default) plus a few additional voices in the UI.
 - Chunked synthesis for long texts and optional streaming (MP3) so large inputs don't time out.
 - Adjustable `pace` (Slow, Normal, Fast, Faster) — pace adjusts speaking rate and sentence pause *length* (fixed base pause = 300ms).
-- Slide markers like `Slide 1 Slide 2` are automatically skipped and replaced with a 3s pause.
+- Slide markers like `Slide 1 Slide 2` are automatically skipped during synthesis.
 - Output formats: `MP3` and `WAV`.
 - Includes a `Dockerfile` and a GitHub Actions smoke test.
 
@@ -71,10 +76,12 @@ Docker
 GitHub Actions hosting
 
 - The workflow `publish.yml` (push → main) deploys the `static/` site to **GitHub Pages** at `https://jaeyk.github.io/PracticeTalk/`.
-- On GitHub Pages, set **Backend URL** in the UI to your running FastAPI server (for example `https://<your-backend-host>`). The `/estimate` and `/synthesize` endpoints are served by the backend, not by GitHub Pages.
+- GitHub Pages is frontend-only. On that page, set **Backend URL** to your running FastAPI server (for example `https://<your-backend-host>`).
+- If you do not have a backend URL, run locally and open `http://127.0.0.1:8000` instead.
 
 Notes
 
 - Streaming uses MP3 chunk streaming (MediaSource in the web UI).
 - ETA & progress: the UI shows an estimated talk duration based on `pace` and text length and presents a playback progress bar while listening.
+- Processing can be slow for long scripts or busy voice service periods. Please be patient after clicking **Synthesize**.
 - Uploaded text must be UTF-8. Max input size ~200k characters (configurable in `main.py`).
