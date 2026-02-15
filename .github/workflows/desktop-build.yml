@@ -1,0 +1,45 @@
+name: Desktop Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build macOS app
+        run: bash scripts/build_desktop.sh
+      - name: Build macOS installer (.pkg)
+        run: bash scripts/build_installer_macos.sh
+      - name: Archive macOS app
+        run: ditto -c -k --sequesterRsrc --keepParent dist/PracticeTalk.app dist/PracticeTalk-mac.zip
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PracticeTalk-mac
+          path: |
+            dist/PracticeTalk-mac.zip
+            dist/PracticeTalk-mac.pkg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+      - name: Build Windows installer
+        run: scripts\build_installer_windows.bat
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PracticeTalk-windows
+          path: |
+            dist/PracticeTalk.exe
+            dist/PracticeTalk-Setup.exe

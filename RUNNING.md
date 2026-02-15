@@ -1,20 +1,22 @@
-Run locally
+Run locally (no terminal)
 
-1. Create and activate a virtual environment:
+- Mac: double-click `run_local.command`
+- Windows: double-click `run_local.bat`
+- App URL: `http://127.0.0.1:8000`
+
+The launcher handles environment setup and dependency install automatically.
+
+Run locally (terminal)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+bash scripts/run_local.sh
 ```
 
-2. Install dependencies and start the server:
+or
 
-```bash
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+```bat
+scripts\run_local.bat
 ```
-
-3. Open in your browser: http://localhost:8000
 
 Docker
 
@@ -22,6 +24,18 @@ Docker
 docker build -t talk-practice .
 docker run -p 8000:8000 talk-practice
 ```
+
+Desktop app bundle (for sharing)
+
+- macOS/Linux build: `bash scripts/build_desktop.sh`
+- Windows build: `scripts\build_desktop.bat`
+- Output files: `dist/PracticeTalk.app` (macOS), `dist/PracticeTalk.exe` (Windows)
+
+Installer package (recommended for non-technical users)
+
+- macOS installer build: `bash scripts/build_installer_macos.sh`
+- Windows installer build: `scripts\build_installer_windows.bat`
+- Output files: `dist/PracticeTalk-mac.pkg` (macOS), `dist/PracticeTalk-Setup.exe` (Windows)
 
 Endpoints
 - `POST /synthesize` — accepts `file` (text) OR `text` (form field). Optional form fields: `voice`, `fmt` (`mp3` or `wav`). Returns the audio file.

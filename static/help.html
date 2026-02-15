@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PracticeTalk Help</title>
+    <style>
+      :root {
+        --bg: #f7f8fb;
+        --card: #ffffff;
+        --ink: #1c2430;
+        --muted: #5e6977;
+        --line: #d9e0ea;
+        --accent: #0b66ff;
+        --ok: #e9f7ef;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 10%, #eaf1ff, transparent 32%),
+          radial-gradient(circle at 90% 0%, #f2f8e7, transparent 26%),
+          var(--bg);
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 28px 18px 48px;
+      }
+      .hero {
+        background: linear-gradient(135deg, #f0f5ff 0%, #ffffff 100%);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px;
+      }
+      h1 { margin: 0 0 8px; font-size: 1.8rem; }
+      h2 { margin: 28px 0 10px; font-size: 1.25rem; }
+      p { margin: 10px 0; line-height: 1.55; }
+      .muted { color: var(--muted); }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        margin: 12px 0;
+      }
+      .ok {
+        background: var(--ok);
+        border-color: #bfe4c9;
+      }
+      ol, ul { margin: 10px 0 0 18px; line-height: 1.55; }
+      code {
+        font-family: ui-monospace, Menlo, Consolas, monospace;
+        background: #f3f5f8;
+        border: 1px solid #e4e8ef;
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+      .btn {
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        padding: 9px 14px;
+        margin-top: 6px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      @media (max-width: 700px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="hero">
+        <h1>PracticeTalk Setup Guide</h1>
+        <p>Install and start PracticeTalk without using the terminal.</p>
+        <p class="muted">If you only want to start now, install the app for your platform, launch it, and use <code>http://127.0.0.1:8000</code> in your browser.</p>
+        <a class="btn" href="/">Open PracticeTalk</a>
+      </section>
+
+      <h2>1. Choose Your Install Method</h2>
+      <div class="grid">
+        <article class="card ok">
+          <h3>Recommended: Installer</h3>
+          <p>Use the installer package from your download source:</p>
+          <ul>
+            <li>macOS: <code>PracticeTalk-mac.pkg</code></li>
+            <li>Windows: <code>PracticeTalk-Setup.exe</code></li>
+          </ul>
+          <p>This gives you standard app installation and shortcuts.</p>
+        </article>
+        <article class="card">
+          <h3>Portable App</h3>
+          <p>If you received a portable build instead of an installer:</p>
+          <ul>
+            <li>macOS: <code>PracticeTalk.app</code></li>
+            <li>Windows: <code>PracticeTalk.exe</code></li>
+          </ul>
+          <p>Just open the app file directly.</p>
+        </article>
+      </div>
+
+      <h2>2. Install</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>macOS</h3>
+          <ol>
+            <li>Double-click <code>PracticeTalk-mac.pkg</code>.</li>
+            <li>Follow the installer steps.</li>
+            <li>Open <code>Applications</code> and launch PracticeTalk.</li>
+          </ol>
+          <p class="muted">If blocked by Gatekeeper, right-click the app and choose Open once.</p>
+        </article>
+        <article class="card">
+          <h3>Windows</h3>
+          <ol>
+            <li>Double-click <code>PracticeTalk-Setup.exe</code>.</li>
+            <li>Click through the setup wizard.</li>
+            <li>Launch PracticeTalk from Start Menu or desktop shortcut.</li>
+          </ol>
+          <p class="muted">If SmartScreen appears, click More info then Run anyway.</p>
+        </article>
+      </div>
+
+      <h2>3. Use PracticeTalk</h2>
+      <article class="card">
+        <ol>
+          <li>Launch PracticeTalk.</li>
+          <li>Your browser opens to <code>http://127.0.0.1:8000</code>.</li>
+          <li>Paste text or upload a <code>.txt</code> file.</li>
+          <li>Choose voice, format, and pace.</li>
+          <li>Click <strong>Synthesize</strong> and play or download audio.</li>
+        </ol>
+      </article>
+
+      <h2>4. Troubleshooting</h2>
+      <article class="card">
+        <ul>
+          <li>If the browser does not open, manually visit <code>http://127.0.0.1:8000</code>.</li>
+          <li>If speech generation fails, confirm internet access.</li>
+          <li>If another app is already using port 8000, close it and relaunch PracticeTalk.</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>

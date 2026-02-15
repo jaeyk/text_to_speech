@@ -8,8 +8,21 @@ import os
 import re
 import asyncio
 import wave
+import sys
 import edge_tts
 from typing import List
+from pathlib import Path
+
+
+def resolve_static_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        base_dir = Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    else:
+        base_dir = Path(__file__).resolve().parent
+    return base_dir / "static"
+
+
+STATIC_DIR = resolve_static_dir()
 
 app = FastAPI(title="Talk Practice — edge-tts")
 # Development-friendly CORS (restrict in production)
@@ -20,12 +33,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 @app.get("/")
 async def index():
-    return FileResponse("static/index.html")
+    return FileResponse(str(STATIC_DIR / "index.html"))
+
+
+@app.get("/help")
+async def help_page():
+    return FileResponse(str(STATIC_DIR / "help.html"))
+
+
+@app.get("/help.html")
+async def help_page_html():
+    return FileResponse(str(STATIC_DIR / "help.html"))
 
 
 # Small curated voice list for the UI

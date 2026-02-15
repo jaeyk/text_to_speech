@@ -1,70 +1,62 @@
 # PracticeTalk
 
-PracticeTalk is a lightweight local speech synthesis tool with a web interface that turns your talk script into audio so you can review flow and narrative.
+PracticeTalk turns your script into audio so you can rehearse your talk in a browser.
 
 Jae Yeon Kim and Codex (2026).
 
-## Recommended Mode
+## Start Here (No Terminal Needed)
 
-Run locally and use one URL only:
+### Mac
 
-- `http://127.0.0.1:8000`
+1. Double-click `run_local.command`.
+2. Your browser opens to `http://127.0.0.1:8000`.
+3. Paste text or upload `.txt`, then click synthesize.
 
-## Requirements
+If macOS warns about security, right-click `run_local.command` and choose `Open`.
 
-- Python 3.10+
-- Internet connection (needed when synthesizing speech via `edge-tts`)
+### Windows
 
-Python package dependencies are in `requirements.txt`:
+1. Double-click `run_local.bat`.
+2. Your browser opens to `http://127.0.0.1:8000`.
+3. Paste text or upload `.txt`, then click synthesize.
 
-- `fastapi`
-- `uvicorn[standard]`
-- `edge-tts`
-- `python-multipart`
+Keep the launcher window open while using PracticeTalk. Close it to stop the app.
 
-You do not need to install these manually if you use the launcher scripts below.
+In-app help website:
 
-## Quick Start (Script-Based)
+- `http://127.0.0.1:8000/help`
 
-### Mac / Linux
+## First-Time Setup (Automatic)
 
-macOS (double-click):
+The launcher does this for you:
 
-- Double-click `run_local.command` in Finder.
+1. Finds Python 3.10+
+2. Creates `.venv` if needed
+3. Installs dependencies from `requirements.txt`
+4. Starts the server on `127.0.0.1:8000`
+5. Opens your browser
 
-Run:
+## Troubleshooting
+
+- Python missing: install from `https://www.python.org/downloads/`, then run the launcher again.
+- Browser did not open: manually go to `http://127.0.0.1:8000`.
+- Port `8000` in use: close the other app using port 8000, then restart launcher.
+
+## Advanced (Terminal)
+
+Mac/Linux:
 
 ```bash
 bash scripts/run_local.sh
 ```
 
-What this script does:
-
-1. Finds Python 3
-2. Creates `.venv` if missing
-3. Installs dependencies from `requirements.txt`
-4. Starts server on `127.0.0.1:8000`
-5. Opens your browser automatically
-
-### Windows (Command Prompt)
-
-Run:
+Windows:
 
 ```bat
 scripts\run_local.bat
 ```
 
-What this script does:
-
-1. Finds `py` or `python`
-2. Creates `.venv` if missing
-3. Installs dependencies from `requirements.txt`
-4. Starts server on `127.0.0.1:8000`
-5. Opens your browser automatically
-
-## Manual Start (Advanced)
-
-If you prefer manual control:
+Manual server start:
 
 ```bash
 python -m venv .venv
@@ -73,42 +65,84 @@ pip install -r requirements.txt
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Then open:
-
-- `http://127.0.0.1:8000`
-
-Stop the app with `Ctrl + C`.
-
-## Troubleshooting
-
-- Python not found: install Python 3.10+ from `https://www.python.org/downloads/`, then run the launcher script again.
-- macOS blocked `run_local.command`: right-click the file, choose `Open`, then confirm `Open`.
-- Port `8000` already in use: stop the other app using port 8000, then restart the launcher script.
-
 ## Features
 
-- Upload a `.txt` file or paste text and synthesize speech.
-- Supports `en-US-AvaMultilingualNeural` (default) plus additional voices in the UI.
-- Chunked synthesis for long texts.
-- Optional streaming (MP3) for long inputs.
-- Adjustable `pace` (Slow, Normal, Fast, Faster).
-- Slide markers like `Slide 1 Slide 2` are automatically skipped.
-- Output formats: `MP3` and `WAV`.
+- Paste text or upload `.txt`
+- Voices including `en-US-AvaMultilingualNeural`
+- MP3 and WAV output
+- Speed control (`pace`)
+- Long-text chunked synthesis
+- Slide markers like `Slide 1` are skipped automatically
 
 ## Docker
 
-- Build: `docker build -t talk-practice .`
-- Run: `docker run -p 8000:8000 talk-practice`
+- `docker build -t talk-practice .`
+- `docker run -p 8000:8000 talk-practice`
 
-## GitHub Pages (Frontend Only)
+## Desktop App Build (Downloadable Bundle)
 
-- Workflow `publish.yml` deploys `static/` to `https://jaeyk.github.io/PracticeTalk/`.
-- GitHub Pages is frontend-only.
-- On that page, set **Backend URL** to your running FastAPI server.
-- If you do not have a backend URL, use local mode at `http://127.0.0.1:8000`.
+You can package PracticeTalk as a desktop app so users can just open it.
 
-## Notes
+macOS / Linux:
 
-- Uploaded text must be UTF-8.
-- Max input is about 200k characters (configurable in `main.py`).
-- Long scripts may take time to process.
+```bash
+bash scripts/build_desktop.sh
+```
+
+Windows:
+
+```bat
+scripts\build_desktop.bat
+```
+
+Build outputs:
+
+- macOS: `dist/PracticeTalk.app`
+- Windows: `dist/PracticeTalk.exe`
+
+Share that built file with users on the same OS. When they open it, it starts PracticeTalk and opens the app in a browser.
+
+## Installer Build (Recommended for End Users)
+
+These produce normal installer files (install wizard / installer package):
+
+macOS:
+
+```bash
+bash scripts/build_installer_macos.sh
+```
+
+Windows:
+
+```bat
+scripts\build_installer_windows.bat
+```
+
+Installer outputs:
+
+- macOS installer: `dist/PracticeTalk-mac.pkg`
+- Windows installer: `dist/PracticeTalk-Setup.exe`
+
+After install, users can launch PracticeTalk from Applications (macOS) or Start Menu/Desktop shortcut (Windows).
+
+## Auto Release (GitHub)
+
+When you push a version tag (example: `v1.0.0`), GitHub Actions will:
+
+1. Build macOS and Windows installers
+2. Create a GitHub Release for that tag
+3. Attach downloadable files
+
+Release files:
+
+- `PracticeTalk-mac.pkg`
+- `PracticeTalk-mac.zip`
+- `PracticeTalk-Setup.exe`
+- `PracticeTalk.exe`
+
+Tag and push example:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
