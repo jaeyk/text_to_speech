@@ -1,367 +1,428 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>PracticeTalk</title>
-    <style>
-      body { font-family: system-ui, Arial, sans-serif; max-width:900px; margin:2rem auto; padding:1rem; }
-      textarea { width:100%; height:160px; font-size:1rem; padding:8px; }
-      .controls { margin-top:1rem; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-      audio { width:100%; margin-top:1rem; }
-      .note { color:#666; font-size:0.9rem; }
-      .btn { padding:8px 12px; font-size:1rem; }
-      select, input[type="checkbox"] { margin-left:6px }
-      input[type="url"] { padding:6px; min-width:280px; }
-      progress { width:200px; }
-      .warn { background:#fff4d6; border:1px solid #e6c775; padding:10px; border-radius:8px; margin:12px 0; }
-      .help-link { display:inline-block; margin:8px 0 14px; }
-    </style>
-  </head>
-  <body>
-    <h1>PracticeTalk</h1>
-    <p>This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an audio file, allowing you to check its flow and narrative.</p>
-    <p class="help-link"><a href="help.html">New here? Open the step-by-step install and usage guide.</a></p>
-    <p class="note"><strong>Developed by:</strong> Jae Yeon Kim and Codex (2026).</p>
-    <div id="mode_notice" class="warn" style="display:none"></div>
 
-    <form id="form">
-      <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
-      <label>Or paste text:
-        <textarea id="text" placeholder="Type or paste text here..."></textarea>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PracticeTalk</title>
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      font-size: 1rem;
+      padding: 8px;
+    }
+
+    .controls {
+      margin-top: 1rem;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .note {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      font-size: 1rem;
+    }
+
+    select,
+    input[type="checkbox"] {
+      margin-left: 6px
+    }
+
+    input[type="url"] {
+      padding: 6px;
+      min-width: 280px;
+    }
+
+    progress {
+      width: 200px;
+    }
+
+    .warn {
+      background: #fff4d6;
+      border: 1px solid #e6c775;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .help-link {
+      display: inline-block;
+      margin: 8px 0 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>PracticeTalk</h1>
+  <p>This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an
+    audio file, allowing you to check its flow and narrative.</p>
+  <p class="help-link"><a href="help.html">New here? Open the step-by-step install and usage guide.</a></p>
+  <p class="note"><strong>Developed by:</strong> Jae Yeon Kim, Codex, and Gemini (2026).</p>
+  <div id="mode_notice" class="warn" style="display:none"></div>
+
+  <form id="form">
+    <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
+    <label>Or paste text:
+      <textarea id="text" placeholder="Type or paste text here..."></textarea>
+    </label>
+
+    <div class="controls">
+      <label>Backend URL:
+        <input id="backend_url" type="url" placeholder="http://127.0.0.1:8000 (local) or https://your-api-host" />
+      </label>
+      <span class="note">Example: <code>http://127.0.0.1:8000</code> (local backend)</span>
+
+      <label>Voice:
+        <select id="voice">
+          <option value="en-US-AvaMultilingualNeural">Ava (en-US)</option>
+          <option value="en-US-JennyNeural">Jenny (en-US)</option>
+          <option value="en-GB-LibbyNeural">Libby (en-GB)</option>
+          <option value="en-AU-NatashaNeural">Natasha (en-AU)</option>
+        </select>
       </label>
 
-      <div class="controls">
-        <label>Backend URL:
-          <input id="backend_url" type="url" placeholder="http://127.0.0.1:8000 (local) or https://your-api-host" />
-        </label>
-        <span class="note">Example: <code>http://127.0.0.1:8000</code> (local backend)</span>
+      <label>Format:
+        <select id="format">
+          <option value="mp3">MP3</option>
+          <option value="wav">WAV</option>
+        </select>
+      </label>
 
-        <label>Voice:
-          <select id="voice">
-            <option value="en-US-AvaMultilingualNeural">Ava (en-US)</option>
-            <option value="en-US-JennyNeural">Jenny (en-US)</option>
-            <option value="en-GB-LibbyNeural">Libby (en-GB)</option>
-            <option value="en-AU-NatashaNeural">Natasha (en-AU)</option>
-          </select>
-        </label>
+      <label>Pace:
+        <select id="pace">
+          <option value="slow">Slow</option>
+          <option value="normal" selected>Normal</option>
+          <option value="fast">Fast</option>
+          <option value="faster">Faster</option>
+        </select>
+      </label>
 
-        <label>Format:
-          <select id="format">
-            <option value="mp3">MP3</option>
-            <option value="wav">WAV</option>
-          </select>
-        </label>
+      <label title="Stream MP3 chunks as they are generated (MP3 only)">
+        <input type="checkbox" id="stream" /> Stream as produced
+      </label>
 
-        <label>Pace:
-          <select id="pace">
-            <option value="slow">Slow</option>
-            <option value="normal" selected>Normal</option>
-            <option value="fast">Fast</option>
-            <option value="faster">Faster</option>
-          </select>
-        </label>
+      <button id="speak" type="button" class="btn">Synthesize →</button>
+      <a id="download" style="display:none" download>Download</a>
+      <progress id="progress" value="0" max="100" style="display:none"></progress>
+      <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped during synthesis. Processing can be
+        slow, so please be patient after clicking Synthesize.</div>
 
-        <label title="Stream MP3 chunks as they are generated (MP3 only)">
-          <input type="checkbox" id="stream" /> Stream as produced
-        </label>
-
-        <button id="speak" type="button" class="btn">Synthesize →</button>
-        <a id="download" style="display:none" download>Download</a>
-        <progress id="progress" value="0" max="100" style="display:none"></progress>
-        <div id="status" class="note">Tip: text like "Slide 1 Slide 2" is skipped during synthesis. Processing can be slow, so please be patient after clicking Synthesize.</div>
-
-        <div style="width:100%; margin-top:8px;">
-          <div id="eta_text" class="note"></div>
-          <progress id="talk_progress" value="0" max="100" style="width:100%; display:none"></progress>
-        </div>
+      <div style="width:100%; margin-top:8px;">
+        <div id="eta_text" class="note"></div>
+        <progress id="talk_progress" value="0" max="100" style="width:100%; display:none"></progress>
       </div>
-    </form>
+    </div>
+  </form>
 
-    <audio id="player" controls></audio>
-    <details style="margin-top:1rem;">
-      <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
-      <p class="note">Run locally for the easiest setup (frontend + backend together).</p>
-      <p><strong>Requirements:</strong> Python 3.10+ and internet access for speech synthesis.</p>
-      <ol>
-        <li>Download ZIP from <code>https://github.com/jaeyk/PracticeTalk</code> and unzip it.</li>
-        <li>Install Python from <code>https://www.python.org/downloads/</code>.</li>
-      </ol>
-      <p><strong>macOS (Finder, easiest)</strong></p>
-      <pre><code>Double-click: run_local.command</code></pre>
-      <p><strong>Mac / Linux (Terminal)</strong></p>
-      <pre><code>bash scripts/run_local.sh</code></pre>
-      <p><strong>Windows (Command Prompt)</strong></p>
-      <pre><code>scripts\run_local.bat</code></pre>
-      <p class="note">These scripts create <code>.venv</code>, install dependencies, start the server, and open <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
-      <p><strong>Troubleshooting</strong></p>
-      <ul>
-        <li><strong>Python not found:</strong> install Python 3.10+ from <code>https://www.python.org/downloads/</code>, then run the launcher script again.</li>
-        <li><strong>macOS blocked <code>run_local.command</code>:</strong> right-click the file, choose <em>Open</em>, then confirm <em>Open</em>.</li>
-        <li><strong>Port 8000 already in use:</strong> stop the other app using port 8000, then restart the launcher script.</li>
-      </ul>
-    </details>
+  <audio id="player" controls></audio>
+  <details style="margin-top:1rem;">
+    <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
+    <p class="note">Run locally for the easiest setup (frontend + backend together).</p>
+    <p><strong>Requirements:</strong> Python 3.10+ and internet access for speech synthesis.</p>
+    <ol>
+      <li>Download ZIP from <code>https://github.com/jaeyk/PracticeTalk</code> and unzip it.</li>
+      <li>Install Python from <code>https://www.python.org/downloads/</code>.</li>
+    </ol>
+    <p><strong>macOS (Finder, easiest)</strong></p>
+    <pre><code>Double-click: run_local.command</code></pre>
+    <p><strong>Mac / Linux (Terminal)</strong></p>
+    <pre><code>bash scripts/run_local.sh</code></pre>
+    <p><strong>Windows (Command Prompt)</strong></p>
+    <pre><code>scripts\run_local.bat</code></pre>
+    <p class="note">These scripts create <code>.venv</code>, install dependencies, start the server, and open
+      <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
+    <p><strong>Troubleshooting</strong></p>
+    <ul>
+      <li><strong>Python not found:</strong> install Python 3.10+ from <code>https://www.python.org/downloads/</code>,
+        then run the launcher script again.</li>
+      <li><strong>macOS blocked <code>run_local.command</code>:</strong> right-click the file, choose <em>Open</em>,
+        then confirm <em>Open</em>.</li>
+      <li><strong>Port 8000 already in use:</strong> stop the other app using port 8000, then restart the launcher
+        script.</li>
+    </ul>
+  </details>
 
-    <script>
-      const btn = document.getElementById('speak');
-      const fileInput = document.getElementById('file');
-      const textInput = document.getElementById('text');
-      const status = document.getElementById('status');
-      const player = document.getElementById('player');
-      const download = document.getElementById('download');
-      const voiceSelect = document.getElementById('voice');
-      const formatSelect = document.getElementById('format');
-      const paceSelect = document.getElementById('pace');
-      const streamCheckbox = document.getElementById('stream');
-      const progressEl = document.getElementById('progress');
-      const backendInput = document.getElementById('backend_url');
+  <script>
+    const btn = document.getElementById('speak');
+    const fileInput = document.getElementById('file');
+    const textInput = document.getElementById('text');
+    const status = document.getElementById('status');
+    const player = document.getElementById('player');
+    const download = document.getElementById('download');
+    const voiceSelect = document.getElementById('voice');
+    const formatSelect = document.getElementById('format');
+    const paceSelect = document.getElementById('pace');
+    const streamCheckbox = document.getElementById('stream');
+    const progressEl = document.getElementById('progress');
+    const backendInput = document.getElementById('backend_url');
 
-      // ETA / talk progress (values set after estimate)
-      let estimatedSeconds = 0;
-      const etaText = document.getElementById('eta_text');
-      const talkProgress = document.getElementById('talk_progress');
+    // ETA / talk progress (values set after estimate)
+    let estimatedSeconds = 0;
+    const etaText = document.getElementById('eta_text');
+    const talkProgress = document.getElementById('talk_progress');
 
-      // Disable streaming when WAV is selected
-      formatSelect.addEventListener('change', () => {
-        if (formatSelect.value === 'wav') {
-          streamCheckbox.checked = false;
-          streamCheckbox.disabled = true;
-        } else {
-          streamCheckbox.disabled = false;
-        }
-      });
-
-      const isGithubPages = window.location.hostname.endsWith('github.io');
-      const modeNotice = document.getElementById('mode_notice');
-      const LOCAL_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
-      const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
-      if (savedBackend) {
-        backendInput.value = savedBackend;
-      } else if (!isGithubPages) {
-        backendInput.value = window.location.origin || LOCAL_BACKEND_DEFAULT;
+    // Disable streaming when WAV is selected
+    formatSelect.addEventListener('change', () => {
+      if (formatSelect.value === 'wav') {
+        streamCheckbox.checked = false;
+        streamCheckbox.disabled = true;
       } else {
-        backendInput.value = LOCAL_BACKEND_DEFAULT;
+        streamCheckbox.disabled = false;
       }
-      if (isGithubPages) {
-        modeNotice.style.display = 'block';
-        modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. Default backend is set to <code>http://127.0.0.1:8000</code> (for local backend). Change it if your API runs elsewhere.';
-      }
-      backendInput.addEventListener('change', () => {
-        localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());
-      });
+    });
 
-      function apiUrl(path) {
-        const base = backendInput.value.trim().replace(/\/+$/, '');
-        if (!base) return path;
-        return `${base}${path}`;
-      }
+    const isGithubPages = window.location.hostname.endsWith('github.io');
+    const modeNotice = document.getElementById('mode_notice');
+    const LOCAL_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
+    const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
+    if (savedBackend) {
+      backendInput.value = savedBackend;
+    } else if (!isGithubPages) {
+      backendInput.value = window.location.origin || LOCAL_BACKEND_DEFAULT;
+    } else {
+      backendInput.value = LOCAL_BACKEND_DEFAULT;
+    }
+    if (isGithubPages) {
+      modeNotice.style.display = 'block';
+      modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. Default backend is set to <code>http://127.0.0.1:8000</code> (for local backend). Change it if your API runs elsewhere.';
+    }
+    backendInput.addEventListener('change', () => {
+      localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());
+    });
 
-      function setBusy(on) {
-        btn.disabled = on;
-        if (!on) btn.textContent = 'Synthesize →';
-      }
+    function apiUrl(path) {
+      const base = backendInput.value.trim().replace(/\/+$/, '');
+      if (!base) return path;
+      return `${base}${path}`;
+    }
 
-      async function synthesizeNormal(fd) {
-        const resp = await fetch(apiUrl('/synthesize'), { method: 'POST', body: fd });
-        if (!resp.ok) {
-          const raw = await resp.text().catch(() => '');
-          let detail = '';
-          try {
-            detail = JSON.parse(raw)?.detail || '';
-          } catch (_) {
-            detail = '';
-          }
-          throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
+    function setBusy(on) {
+      btn.disabled = on;
+      if (!on) btn.textContent = 'Synthesize →';
+    }
+
+    async function synthesizeNormal(fd) {
+      const resp = await fetch(apiUrl('/synthesize'), { method: 'POST', body: fd });
+      if (!resp.ok) {
+        const raw = await resp.text().catch(() => '');
+        let detail = '';
+        try {
+          detail = JSON.parse(raw)?.detail || '';
+        } catch (_) {
+          detail = '';
         }
-        const blob = await resp.blob();
-        return blob;
+        throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
+      }
+      const blob = await resp.blob();
+      return blob;
+    }
+
+    async function synthesizeStream(fd) {
+      const resp = await fetch(apiUrl('/synthesize_stream'), { method: 'POST', body: fd });
+      if (!resp.ok || !resp.body) {
+        const raw = await resp.text().catch(() => '');
+        let detail = '';
+        try {
+          detail = JSON.parse(raw)?.detail || '';
+        } catch (_) {
+          detail = '';
+        }
+        throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
       }
 
-      async function synthesizeStream(fd) {
-        const resp = await fetch(apiUrl('/synthesize_stream'), { method: 'POST', body: fd });
-        if (!resp.ok || !resp.body) {
-          const raw = await resp.text().catch(() => '');
-          let detail = '';
+      const mediaSource = new MediaSource();
+      const url = URL.createObjectURL(mediaSource);
+      player.src = url;
+
+      await new Promise((resolve, reject) => {
+        mediaSource.addEventListener('sourceopen', async () => {
           try {
-            detail = JSON.parse(raw)?.detail || '';
-          } catch (_) {
-            detail = '';
-          }
-          throw new Error(detail || `HTTP ${resp.status}: ${resp.statusText || 'request failed'}`);
-        }
-
-        const mediaSource = new MediaSource();
-        const url = URL.createObjectURL(mediaSource);
-        player.src = url;
-
-        await new Promise((resolve, reject) => {
-          mediaSource.addEventListener('sourceopen', async () => {
-            try {
-              const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
-              const reader = resp.body.getReader();
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                if (value) await appendBufferAsync(sourceBuffer, value);
+            const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+            const reader = resp.body.getReader();
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              if (value) await appendBufferAsync(sourceBuffer, value);
+            }
+            const finalize = () => {
+              if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                mediaSource.endOfStream();
+                resolve();
+              } else {
+                setTimeout(finalize, 50);
               }
-              const finalize = () => {
-                if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
-                  mediaSource.endOfStream();
-                  resolve();
-                } else {
-                  setTimeout(finalize, 50);
-                }
-              };
-              finalize();
+            };
+            finalize();
+          } catch (err) {
+            reject(err);
+          }
+        }, { once: true });
+      });
+    }
+
+    function appendBufferAsync(sourceBuffer, chunk) {
+      return new Promise((resolve, reject) => {
+        const tryAppend = () => {
+          if (!sourceBuffer.updating) {
+            try {
+              sourceBuffer.appendBuffer(chunk);
+              resolve();
             } catch (err) {
               reject(err);
             }
-          }, { once: true });
-        });
-      }
-
-      function appendBufferAsync(sourceBuffer, chunk) {
-        return new Promise((resolve, reject) => {
-          const tryAppend = () => {
-            if (!sourceBuffer.updating) {
-              try {
-                sourceBuffer.appendBuffer(chunk);
-                resolve();
-              } catch (err) {
-                reject(err);
-              }
-            } else {
-              setTimeout(tryAppend, 50);
-            }
-          };
-          tryAppend();
-        });
-      }
-
-      function formatTime(s) {
-        s = Math.max(0, Math.round(s));
-        const m = Math.floor(s / 60);
-        const sec = (s % 60).toString().padStart(2, '0');
-        return `${m}:${sec}`;
-      }
-
-      player.addEventListener('loadedmetadata', () => {
-        if (player.duration && isFinite(player.duration) && player.duration > 0) {
-          if (player.duration > estimatedSeconds) {
-            estimatedSeconds = player.duration;
-            etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
-          }
-        }
-      });
-
-      player.addEventListener('timeupdate', () => {
-        const total = estimatedSeconds && isFinite(estimatedSeconds) ? Math.max(estimatedSeconds, player.duration || 0) : (player.duration || 0);
-        if (total > 0) {
-          talkProgress.style.display = 'block';
-          const pct = Math.min(100, (player.currentTime / total) * 100);
-          talkProgress.value = pct;
-          const remaining = Math.max(0, Math.round(total - player.currentTime));
-          etaText.textContent = 'ETA: ' + formatTime(remaining);
-        }
-      });
-
-      player.addEventListener('ended', () => {
-        talkProgress.value = 100;
-        etaText.textContent = 'Done';
-      });
-
-      async function runSynthesis() {
-        status.textContent = '';
-        setBusy(true);
-        progressEl.style.display = 'none';
-        progressEl.value = 0;
-        download.style.display = 'none';
-        etaText.textContent = '';
-        talkProgress.style.display = 'none';
-        talkProgress.value = 0;
-        estimatedSeconds = 0;
-
-        // estimate first
-        const fdEstimate = new FormData();
-        fdEstimate.append('voice', voiceSelect.value);
-        fdEstimate.append('pace', paceSelect.value);
-        if (fileInput.files.length) {
-          fdEstimate.append('file', fileInput.files[0]);
-        } else {
-          fdEstimate.append('text', textInput.value);
-        }
-
-        try {
-          const estResp = await fetch(apiUrl('/estimate'), { method: 'POST', body: fdEstimate });
-          if (estResp.ok) {
-            const est = await estResp.json();
-            estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
-            etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
-            talkProgress.value = 0;
-            talkProgress.style.display = 'block';
           } else {
-            estimatedSeconds = 0;
-            etaText.textContent = '';
-            talkProgress.style.display = 'none';
+            setTimeout(tryAppend, 50);
           }
-        } catch (e) {
+        };
+        tryAppend();
+      });
+    }
+
+    function formatTime(s) {
+      s = Math.max(0, Math.round(s));
+      const m = Math.floor(s / 60);
+      const sec = (s % 60).toString().padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
+    player.addEventListener('loadedmetadata', () => {
+      if (player.duration && isFinite(player.duration) && player.duration > 0) {
+        if (player.duration > estimatedSeconds) {
+          estimatedSeconds = player.duration;
+          etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
+        }
+      }
+    });
+
+    player.addEventListener('timeupdate', () => {
+      const total = estimatedSeconds && isFinite(estimatedSeconds) ? Math.max(estimatedSeconds, player.duration || 0) : (player.duration || 0);
+      if (total > 0) {
+        talkProgress.style.display = 'block';
+        const pct = Math.min(100, (player.currentTime / total) * 100);
+        talkProgress.value = pct;
+        const remaining = Math.max(0, Math.round(total - player.currentTime));
+        etaText.textContent = 'ETA: ' + formatTime(remaining);
+      }
+    });
+
+    player.addEventListener('ended', () => {
+      talkProgress.value = 100;
+      etaText.textContent = 'Done';
+    });
+
+    async function runSynthesis() {
+      status.textContent = '';
+      setBusy(true);
+      progressEl.style.display = 'none';
+      progressEl.value = 0;
+      download.style.display = 'none';
+      etaText.textContent = '';
+      talkProgress.style.display = 'none';
+      talkProgress.value = 0;
+      estimatedSeconds = 0;
+
+      // estimate first
+      const fdEstimate = new FormData();
+      fdEstimate.append('voice', voiceSelect.value);
+      fdEstimate.append('pace', paceSelect.value);
+      if (fileInput.files.length) {
+        fdEstimate.append('file', fileInput.files[0]);
+      } else {
+        fdEstimate.append('text', textInput.value);
+      }
+
+      try {
+        const estResp = await fetch(apiUrl('/estimate'), { method: 'POST', body: fdEstimate });
+        if (estResp.ok) {
+          const est = await estResp.json();
+          estimatedSeconds = Math.max(1, est.estimated_seconds || (est.speech_seconds + est.pause_seconds + est.slide_pause_seconds));
+          etaText.textContent = 'ETA: ' + formatTime(Math.round(estimatedSeconds));
+          talkProgress.value = 0;
+          talkProgress.style.display = 'block';
+        } else {
           estimatedSeconds = 0;
           etaText.textContent = '';
           talkProgress.style.display = 'none';
         }
-
-        const fd = new FormData();
-        fd.append('voice', voiceSelect.value);
-        fd.append('fmt', formatSelect.value);
-        fd.append('pace', paceSelect.value);
-
-        if (isGithubPages && !backendInput.value.trim()) {
-          status.textContent = 'Set Backend URL first (GitHub Pages hosts only the frontend).';
-          setBusy(false);
-          return;
-        }
-
-        if (fileInput.files.length) {
-          fd.append('file', fileInput.files[0]);
-        } else {
-          fd.append('text', textInput.value);
-        }
-
-        try {
-          if (streamCheckbox.checked) {
-            status.textContent = 'Streaming...';
-            await synthesizeStream(fd);
-            player.play().catch(()=>{});
-            download.href = player.src;
-            download.download = 'speech.mp3';
-            download.style.display = 'inline-block';
-            status.textContent = '';
-            progressEl.style.display = 'none';
-          } else {
-            status.textContent = 'Processing...';
-            const blob = await synthesizeNormal(fd);
-            const url = URL.createObjectURL(blob);
-            player.src = url;
-            player.play().catch(()=>{});
-            download.href = url;
-            download.download = formatSelect.value === 'wav' ? 'speech.wav' : 'speech.mp3';
-            download.style.display = 'inline-block';
-            status.textContent = '';
-          }
-        } catch (err) {
-          status.textContent = 'Error: ' + (err.message || err);
-        } finally {
-          setBusy(false);
-        }
+      } catch (e) {
+        estimatedSeconds = 0;
+        etaText.textContent = '';
+        talkProgress.style.display = 'none';
       }
 
-      btn.addEventListener('click', () => {
-        if (!fileInput.files.length && !textInput.value.trim()) {
-          status.textContent = 'Please upload a text file or paste text.';
-          return;
+      const fd = new FormData();
+      fd.append('voice', voiceSelect.value);
+      fd.append('fmt', formatSelect.value);
+      fd.append('pace', paceSelect.value);
+
+      if (isGithubPages && !backendInput.value.trim()) {
+        status.textContent = 'Set Backend URL first (GitHub Pages hosts only the frontend).';
+        setBusy(false);
+        return;
+      }
+
+      if (fileInput.files.length) {
+        fd.append('file', fileInput.files[0]);
+      } else {
+        fd.append('text', textInput.value);
+      }
+
+      try {
+        if (streamCheckbox.checked) {
+          status.textContent = 'Streaming...';
+          await synthesizeStream(fd);
+          player.play().catch(() => { });
+          download.href = player.src;
+          download.download = 'speech.mp3';
+          download.style.display = 'inline-block';
+          status.textContent = '';
+          progressEl.style.display = 'none';
+        } else {
+          status.textContent = 'Processing...';
+          const blob = await synthesizeNormal(fd);
+          const url = URL.createObjectURL(blob);
+          player.src = url;
+          player.play().catch(() => { });
+          download.href = url;
+          download.download = formatSelect.value === 'wav' ? 'speech.wav' : 'speech.mp3';
+          download.style.display = 'inline-block';
+          status.textContent = '';
         }
-        runSynthesis();
-      });
-    </script>
-  </body>
+      } catch (err) {
+        status.textContent = 'Error: ' + (err.message || err);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      if (!fileInput.files.length && !textInput.value.trim()) {
+        status.textContent = 'Please upload a text file or paste text.';
+        return;
+      }
+      runSynthesis();
+    });
+  </script>
+</body>
+
 </html>
