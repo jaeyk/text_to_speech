@@ -5,15 +5,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PracticeTalk</title>
-  <script>
-    (function () {
-      const isGithubPages = window.location.hostname.endsWith('github.io');
-      const alreadyOnHelp = /\/help\.html$/i.test(window.location.pathname);
-      if (isGithubPages && !alreadyOnHelp) {
-        window.location.replace('help.html');
-      }
-    })();
-  </script>
   <style>
     body {
       font-family: system-ui, Arial, sans-serif;
@@ -66,28 +57,14 @@
       width: 200px;
     }
 
-    .warn {
-      background: #fff4d6;
-      border: 1px solid #e6c775;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 12px 0;
-    }
-
-    .help-link {
-      display: inline-block;
-      margin: 8px 0 14px;
-    }
   </style>
 </head>
 
 <body>
   <h1>PracticeTalk</h1>
-  <p>This is a simple, lightweight local speech synthesis tool with a web interface that turns your talk script into an
+  <p>This is a simple, lightweight speech synthesis web app that turns your talk script into an
     audio file, allowing you to check its flow and narrative.</p>
-  <p class="help-link"><a href="help.html">New here? Open the step-by-step install and usage guide.</a></p>
   <p class="note"><strong>Developed by:</strong> Jae Yeon Kim and Codex (2026).</p>
-  <div id="mode_notice" class="warn" style="display:none"></div>
 
   <form id="form">
     <label>Text file (.txt): <input type="file" id="file" accept=".txt" /></label>
@@ -97,9 +74,9 @@
 
     <div class="controls">
       <label>Backend URL:
-        <input id="backend_url" type="url" placeholder="http://127.0.0.1:8000 (local) or https://your-api-host" />
+        <input id="backend_url" type="url" placeholder="Leave blank to use this app's backend" />
       </label>
-      <span class="note">Example: <code>http://127.0.0.1:8000</code> (local backend)</span>
+      <span class="note">Optional: set this only if your API is hosted elsewhere.</span>
 
       <label>Voice:
         <select id="voice">
@@ -144,32 +121,6 @@
   </form>
 
   <audio id="player" controls></audio>
-  <details style="margin-top:1rem;">
-    <summary><strong>How to run locally (Windows, Mac, Linux)</strong></summary>
-    <p class="note">Run locally for the easiest setup (frontend + backend together).</p>
-    <p><strong>Requirements:</strong> Python 3.10+ and internet access for speech synthesis.</p>
-    <ol>
-      <li>Download ZIP from <code>https://github.com/jaeyk/PracticeTalk</code> and unzip it.</li>
-      <li>Install Python from <code>https://www.python.org/downloads/</code>.</li>
-    </ol>
-    <p><strong>macOS (Finder, easiest)</strong></p>
-    <pre><code>Double-click: run_local.command</code></pre>
-    <p><strong>Mac / Linux (Terminal)</strong></p>
-    <pre><code>bash scripts/run_local.sh</code></pre>
-    <p><strong>Windows (Command Prompt)</strong></p>
-    <pre><code>scripts\run_local.bat</code></pre>
-    <p class="note">These scripts create <code>.venv</code>, install dependencies, start the server, and open
-      <code>http://127.0.0.1:8000</code>. Stop with <code>Ctrl + C</code>.</p>
-    <p><strong>Troubleshooting</strong></p>
-    <ul>
-      <li><strong>Python not found:</strong> install Python 3.10+ from <code>https://www.python.org/downloads/</code>,
-        then run the launcher script again.</li>
-      <li><strong>macOS blocked <code>run_local.command</code>:</strong> right-click the file, choose <em>Open</em>,
-        then confirm <em>Open</em>.</li>
-      <li><strong>Port 8000 already in use:</strong> stop the other app using port 8000, then restart the launcher
-        script.</li>
-    </ul>
-  </details>
 
   <script>
     const btn = document.getElementById('speak');
@@ -200,20 +151,11 @@
       }
     });
 
-    const isGithubPages = window.location.hostname.endsWith('github.io');
-    const modeNotice = document.getElementById('mode_notice');
-    const LOCAL_BACKEND_DEFAULT = 'http://127.0.0.1:8000';
     const savedBackend = localStorage.getItem('practicetalk_backend_url') || '';
     if (savedBackend) {
       backendInput.value = savedBackend;
-    } else if (!isGithubPages) {
-      backendInput.value = window.location.origin || LOCAL_BACKEND_DEFAULT;
     } else {
-      backendInput.value = LOCAL_BACKEND_DEFAULT;
-    }
-    if (isGithubPages) {
-      modeNotice.style.display = 'block';
-      modeNotice.innerHTML = '<strong>Frontend-only page:</strong> this URL hosts only the interface. Default backend is set to <code>http://127.0.0.1:8000</code> (for local backend). Change it if your API runs elsewhere.';
+      backendInput.value = window.location.origin;
     }
     backendInput.addEventListener('change', () => {
       localStorage.setItem('practicetalk_backend_url', backendInput.value.trim());

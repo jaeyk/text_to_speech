@@ -14,21 +14,13 @@ PracticeTalk turns your script into audio so you can rehearse your talk in a bro
 
 Jae Yeon Kim and Codex (2026).
 
-## Recent Updates
+## Live App
 
-- Added desktop launcher app entrypoint: `desktop_launcher.py`
-- Added installer build scripts:
-  - `scripts/build_installer_macos.sh`
-  - `scripts/build_installer_windows.bat`
-- Added Windows installer spec: `installers/windows/practicetalk.iss`
-- Added user help page: `static/help.html` (served at `/help`)
-- Added CI workflows:
-  - Manual desktop artifact build: `.github/workflows/desktop-build.yml`
-  - Tag-based release publishing: `.github/workflows/release.yml`
+The app is deployed on Hugging Face Spaces.
 
-## Quick Start (Docker)
+## Development (Optional)
 
-No installation required. Just run:
+Run locally with Docker:
 
 ```bash
 docker run -p 7860:7860 jaeyk/talk-practice:latest
@@ -38,26 +30,8 @@ docker run -p 7860:7860 jaeyk/talk-practice:latest
 
 Then open `http://127.0.0.1:7860` in your browser.
 
-## Cloud Deployment (Free)
+## Deployment
 
-You can run this app without any local setup by deploying to **Hugging Face Spaces**.
+Deployment is automated via GitHub Actions to Hugging Face Spaces.
 
 👉 [**See Deployment Guide**](DEPLOY.md)
-
-## Manual Install (Optional)
-
-If you prefer to run without Docker:
-
-### Mac
-
-1. Download `run_local.command` (or the source code).
-2. Double-click `run_local.command`.
-
-### Windows
-
-1. Download `run_local.bat` (or the source code).
-2. Double-click `run_local.bat`.
-
-## Advanced
-
-... (rest of the sections regarding development or building from source)
