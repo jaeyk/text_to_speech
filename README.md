@@ -1,3 +1,13 @@
+---
+title: PracticeTalk
+emoji: "🎙️"
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # PracticeTalk
 
 PracticeTalk turns your script into audio so you can rehearse your talk in a browser.
